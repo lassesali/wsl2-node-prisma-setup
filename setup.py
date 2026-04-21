@@ -5,7 +5,7 @@ Supports: Ubuntu & Debian
 Author: Lasse Sali
 License: MIT License
 Year: 2026
-Version: 1.2
+Version: 1.3
 """
 
 import subprocess
@@ -38,7 +38,7 @@ def get_linux_distro():
 def main():
     try:
         print("--- WSL2 Setup Script for Node.js/Prisma API ---")
-        print("--- v1.2 | Author: Lasse Sali ---")
+        print("--- v1.3 | Author: Lasse Sali ---")
         
         # --- Detect OS ---
         distro = get_linux_distro()
@@ -61,6 +61,23 @@ def main():
             sys.exit(1)
 
         repo_name = input("[?] Enter repository name [wohi2-course-project]: ").strip() or "wohi2-course-project"
+        
+        # --- NEW: Private Repo Handling ---
+        is_private = input("[?] Is this a private repository? (y/N): ").strip().lower() == 'y'
+        if is_private:
+            auth_method = input("[?] Authenticate via SSH or Personal Access Token? (ssh/pat) [ssh]: ").strip().lower() or "ssh"
+            if auth_method == "pat":
+                github_token = getpass.getpass("[?] Enter your GitHub PAT: ").strip()
+                if not github_token:
+                    print("\n[!] Token is required for HTTPS cloning. Exiting.")
+                    sys.exit(1)
+                clone_url = f"https://{github_token}@github.com/{github_username}/{repo_name}.git"
+            else:
+                print("\n[i] Assuming SSH. Ensure your SSH keys are configured in WSL!")
+                clone_url = f"git@github.com:{github_username}/{repo_name}.git"
+        else:
+            clone_url = f"https://github.com/{github_username}/{repo_name}.git"
+
         db_name = input("[?] Enter database name [MyDb]: ").strip() or "MyDb"
         mysql_user = input("[?] Enter desired Database username: ").strip()
         mysql_pass = getpass.getpass("[?] Enter desired Database password: ").strip()
@@ -83,7 +100,7 @@ def main():
         DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
         CREATE DATABASE IF NOT EXISTS {db_name};
         CREATE USER IF NOT EXISTS '{mysql_user}'@'localhost' IDENTIFIED BY '{mysql_pass}';
-        GRANT ALL PRIVILEGES ON *.* TO '{mysql_user}'@'localhost' WITH GRANT OPTION;
+        GRANT ALL PRIVILEGES ON {db_name}.* TO '{mysql_user}'@'localhost';
         FLUSH PRIVILEGES;
         """
         subprocess.run(["sudo", "mysql", "-u", "root"], input=mysql_setup_query.encode('utf-8'), check=True)
@@ -95,11 +112,14 @@ def main():
         run_command(f"mkdir -p {app_base_dir}")
         
         if not os.path.exists(project_dir):
-            run_command(f"git clone https://github.com/{github_username}/{repo_name}", cwd=app_base_dir)
+            run_command(f"git clone {clone_url}", cwd=app_base_dir)
 
         # --- ENV and Launch ---
         with open(f"{project_dir}/.env", "w") as f:
             f.write(f'DATABASE_URL="mysql://{mysql_user}:{mysql_pass}@localhost:3306/{db_name}"\n')
+        
+        # Secure the .env file so other users on the system can't read the db password
+        run_command(f"chmod 600 {project_dir}/.env")
 
         run_command("npm install", cwd=project_dir)
         run_command("npx prisma generate", cwd=project_dir)
