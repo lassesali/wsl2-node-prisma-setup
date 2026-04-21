@@ -2,10 +2,6 @@
 
 A robust Python script designed to fully automate the setup of a modern Node.js development environment on WSL2. Built to save time for developers by handling everything from system updates to database initialization.
 
-**Author:** Lasse Sali
-**Version:** 1.2  
-**License:** MIT
-
 ## 🌟 Why use this?
 Setting up a database, configuring firewalls, and managing Prisma environments in WSL2 is tedious. This script does it all in one command, ensuring:
 - **Optimal Speed:** Files are placed in the native Linux filesystem (`~/src/`) to avoid the slow `/mnt/c/` boundary.
