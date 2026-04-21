@@ -26,7 +26,7 @@ Setting up a database, configuring firewalls, and managing Prisma environments i
 
 1.  **Download the script** to your WSL2 home directory:
     ```bash
-    wget [https://raw.githubusercontent.com/lassesali/wsl2-node-prisma-setup/main/setup.py](https://raw.githubusercontent.com/lassesali/wsl2-node-prisma-setup/main/setup.py)
+    wget https://raw.githubusercontent.com/lassesali/wsl2-node-prisma-setup/main/setup.py
     ```
 
 2.  **Make it executable:**
